@@ -1,0 +1,62 @@
+# Author wgaunt
+# Created 29.05.21
+# Last edit 13.07.21
+
+version: "3.7"
+networks:
+  my_net:
+    name: my_net
+volumes:
+  website:
+    name: website
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/wgaunt/data/website
+  db:
+    name: db
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/wgaunt/data/db
+services:
+  nginx:
+    container_name: nginx
+    env_file: .env
+    image: nginx
+    build: requirements/nginx/
+    ports:
+      - 443:443
+    restart: on-failure
+    depends_on:
+      - wp
+    volumes:
+      - website:/var/www/html
+    networks:
+      - my_net
+  wp:
+    container_name: wp
+    env_file: .env
+    image: wp
+    build: requirements/wp/
+    restart: on-failure
+    depends_on:
+      - mariadb
+    environment:
+      - WORDPRESS_DB_HOST=mariadb:3306
+    volumes:
+      - website:/var/www/html
+    networks:
+      - my_net
+  mariadb:
+    container_name: mariadb
+    env_file: .env
+    image: mariadb
+    build: requirements/mariaDB/
+    restart: on-failure
+    volumes:
+      - db:/var/lib/mysql
+    networks:
+      - my_net
